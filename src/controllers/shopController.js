@@ -20,10 +20,10 @@ exports.createShop = async (req, res) => {
       return res.status(400).json({ message: 'shopname and TariffPlan are required.' });
     }
 
-    const exists = await Shop.findOne({ owner: seller._id });
-    if (exists) {
-      return res.status(409).json({ message: 'You already own a shop.' });
-    }
+    // const exists = await Shop.findOne({ owner: seller._id });
+    // if (exists) {
+    //   return res.status(409).json({ message: 'You already own a shop.' });
+    // }
 
     const newShop = await Shop.create({
       shopname,
@@ -39,6 +39,19 @@ exports.createShop = async (req, res) => {
   } catch (err) {
     console.error('❌ Shop creation error:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+// my shops
+exports.getMyShops = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+    const shops = await Shop.find({ owner: sellerId });
+    res.status(200).json(shops);
+  } catch (err) {
+    console.error('❌ Get My Shops Error:', err.message);
+    res.status(500).json({ message: 'Server error while fetching shops' });
   }
 };
 

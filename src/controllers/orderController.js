@@ -11,8 +11,21 @@ const createOrder = async (req, res) => {
     if (!rawProducts || !Array.isArray(rawProducts) || rawProducts.length === 0) {
       return res.status(400).json({ message: 'Order products cannot be empty' });
     }
-    if (!address || !address.city || !address.street || !address.phone) {
-      return res.status(400).json({ message: 'Address details are incomplete' });
+    if (
+      !address ||
+      !address.city ||
+      !address.street ||
+      !address.phone ||
+      address.age === undefined ||
+      !address.gender
+    ) {
+      return res.status(400).json({
+        message:
+          'Address details are incomplete. city, street, phone, age, gender are required.',
+      });
+    }
+    if (!['male', 'female'].includes(address.gender.toLowerCase())) {
+      return res.status(400).json({ message: 'Gender must be either "male" or "female"' });
     }
     if (!total || total <= 0) {
       return res.status(400).json({ message: 'Total must be greater than zero' });
@@ -32,22 +45,36 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Invalid payment method' });
     }
 
-    // Transform rawProducts into items
+    // Transform rawProducts into order items including required street and age fields
     const orderItems = rawProducts.map((product) => ({
       productId: product.id || product.productId,
       name: product.name,
       quantity: product.basketquantity || product.quantity,
       price: product.price?.sellingPrice || product.price,
+      street: address.street,
+      age: address.age,
     }));
 
-    // Validate items
+    // Validate items (now including street and age)
     for (const item of orderItems) {
-      if (!item.productId || !item.name || !item.quantity || !item.price) {
+      if (
+        !item.productId ||
+        !item.name ||
+        item.quantity === undefined ||
+        item.price === undefined ||
+        !item.street ||
+        item.age === undefined
+      ) {
         return res.status(400).json({ message: 'Invalid product data' });
       }
     }
 
     const deliveryDetails = {
+      city: address.city,
+      street: address.street,
+      phone: address.phone,
+      age: address.age,
+      gender: address.gender.toLowerCase(),
       address: `${address.city}, ${address.street}`,
       contactNumber: address.phone,
       instructions:

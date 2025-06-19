@@ -59,7 +59,7 @@ const loginUser = async (req, res) => {
 
 // Seller ro'yxatdan o'tkazish
 const registerSeller = async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, storeDescription, storeName} = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -74,6 +74,8 @@ const registerSeller = async (req, res) => {
       email,
       password,
       role: 'seller',
+      storeDescription,
+      storeName
     });
     const token = generateToken(user._id, user.role);
 

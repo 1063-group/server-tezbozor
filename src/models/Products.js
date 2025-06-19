@@ -17,7 +17,7 @@ const productSchema = new mongoose.Schema(
     name: { type: String, required: true },
     category: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Category',
+      ref: 'CategoryINPR',
       required: true,
     },
     seller: {
@@ -27,15 +27,20 @@ const productSchema = new mongoose.Schema(
     },
     shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
     price: {
-      costPrice: { type: Number, required: true },
-      sellingPrice: { type: Number, required: true },
+      costPrice: { type: Number, required: false },
+      sellingPrice: { type: Number, required: false },
       income: { type: Number, default: 0 },
     },
-    stock: { type: Number, required: true, min: 0 },
+    stock: { type: Number, required: false, min: 0 },
     lowStockThreshold: { type: Number, default: 10 }, // 🔥 Default past limit
     view: { type: Number, default: 0 },
     images: [String],
     description: String,
+    subcategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'SubCategory',
+    },
+    rating: { type: Number, default: 0 },
     comments: [commentSchema],
     tags: [String],
     isActive: { type: Boolean, default: true },
@@ -60,4 +65,3 @@ productSchema.pre('save', function (next) {
 });
 
 module.exports = mongoose.model('Product', productSchema);
-module.exports = productSchema;

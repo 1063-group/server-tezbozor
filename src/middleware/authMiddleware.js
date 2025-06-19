@@ -2,6 +2,9 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const dotenv = require('dotenv');
+dotenv.config();
+
 const protect = async (req, res, next) => {
   let token;
   if (
@@ -9,9 +12,19 @@ const protect = async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
+      console.log('💡 Secret:', process.env.JWT_SECRET);
       token = req.headers.authorization.split(' ')[1]; // Tokenni olish
+      console.log('💡 Token:', token);
+      
       const decoded = jwt.verify(token, process.env.JWT_SECRET); // Tokenni tekshirish va dekodlash
-      req.user = await User.findById(decoded.id).select('-password'); // Foydalanuvchini topish va password'ni chiqarish
+      console.log("DECODED: ", decoded)
+      const user = await User.findById(decoded.id);
+      if (!user) {
+        return res
+          .status(401)
+          .json({ message: 'Token bilan foydalanuvchi topilmadi' });
+      }
+      req.user = user;
       next(); // Middleware’ga o‘tish
     } catch (error) {
       console.error('Token xatosi:', error);
@@ -24,8 +37,12 @@ const protect = async (req, res, next) => {
 
 // Admin uchun middleware
 const admin = (req, res, next) => {
-  if (req.user && req.user.role === 'CEO') {
-    // Agar foydalanuvchi admin bo‘lsa
+  if (
+    (req.user && req.user.role === 'CEO') ||
+    (req.user && req.user.role === 'admin')
+  ) {
+    console.log(req.user.role);
+
     return next(); // Keyingi middleware’ga o‘tish
   }
   return res.status(403).json({ message: 'Admin (CEO) huquqi talab etiladi' });

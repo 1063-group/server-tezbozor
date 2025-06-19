@@ -14,6 +14,7 @@ const {
   editShop,
   deleteShop,
   banShop,
+  getMyShops,
 } = require('../controllers/shopController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
@@ -65,7 +66,8 @@ router.post(
   '/',
   protect,
   (req, res, next) => {
-    if (req.user.role !== 'seller') return res.status(403).json({ message: 'Only sellers can create shops' });
+    if (req.user.role !== 'seller')
+      return res.status(403).json({ message: 'Only sellers can create shops' });
     next();
   },
   createShop
@@ -82,6 +84,60 @@ router.post(
  *         description: List of shops
  */
 router.get('/', getAllShops);
+/**
+ * @swagger
+ * tags:
+ *   - name: Shops
+ *     description: Seller'ga tegishli do'konlar bilan ishlash
+ */
+
+/**
+ * @swagger
+ * /api/shops/myshops:
+ *   get:
+ *     summary: Foydalanuvchining do'konlarini olish (faqat seller)
+ *     tags: [Shops]
+ *     description: Avtorizatsiyadan o'tgan seller o'ziga tegishli do'konlar ro'yxatini oladi.
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Do'konlar ro'yxati
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: "665fcf9d5c47b5ae1d2b6b91"
+ *                   shopname:
+ *                     type: string
+ *                     example: "My Electronics Store"
+ *                   owner:
+ *                     type: string
+ *                     example: "665fbd8e12345abc67890fff"
+ *                   description:
+ *                     type: string
+ *                   address:
+ *                     type: string
+ *                   location:
+ *                     type: object
+ *                     properties:
+ *                       lat:
+ *                         type: number
+ *                       lon:
+ *                         type: number
+ *                   TariffPlan:
+ *                     type: string
+ *       401:
+ *         description: Foydalanuvchi avtorizatsiyadan o'tmagan
+ *       500:
+ *         description: Server xatosi
+ */
+router.get('/myshops', protect, getMyShops);
 
 /**
  * @swagger

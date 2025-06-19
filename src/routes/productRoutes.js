@@ -8,17 +8,11 @@ const {
   deleteProduct,
   getProductStockSummary,
   getLowStockProducts,
-  predictOutOfStock
+  predictOutOfStock,
+  getAllProductsRaw,
 } = require('../controllers/productController');
 const { protect } = require('../middleware/authMiddleware');
-
-/**
- * @swagger
- * tags:
- *   name: Products
- *   description: Mahsulotlar bilan ishlash
- */
-
+const upload = require('../middleware/uploadImage');
 /**
  * @swagger
  * /api/products:
@@ -30,14 +24,13 @@ const { protect } = require('../middleware/authMiddleware');
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
  *               - name
  *               - category
  *               - seller
- *               - shop
  *               - stock
  *               - price
  *             properties:
@@ -47,24 +40,31 @@ const { protect } = require('../middleware/authMiddleware');
  *                 type: string
  *               seller:
  *                 type: string
- *               shop:
- *                 type: string
  *               stock:
- *                 type: number
+ *                 type: integer
+ *               description:
+ *                 type: string
  *               price:
- *                 type: object
- *                 properties:
- *                   costPrice:
- *                     type: number
- *                   sellingPrice:
- *                     type: number
+ *                 type: string
+ *                 example: '{"costPrice": 10000, "sellingPrice": 15000}'
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: [ "summer", "discount" ]
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
  *     responses:
  *       201:
- *         description: Mahsulot yaratildi
+ *         description: Mahsulot muvaffaqiyatli yaratildi
  *       400:
- *         description: Xatolik mavjud
+ *         description: Xatolik yuz berdi
  */
-router.post('/', protect, createProduct);
+
+router.post('/', upload.array('images'), createProduct);
 
 /**
  * @swagger
@@ -98,6 +98,21 @@ router.post('/', protect, createProduct);
  *         description: Mahsulotlar ro'yxati
  */
 router.get('/', getAllProducts);
+
+/**
+ * @swagger
+ * /products/all:
+ *   get:
+ *     summary: Barcha productlarni olish (paramsiz)
+ *     tags: [Products]
+ *     responses:
+ *       200:
+ *         description: Barcha productlar ro'yxati
+ *       500:
+ *         description: Server xatosi
+ */
+
+router.get('/all', getAllProductsRaw);
 
 /**
  * @swagger

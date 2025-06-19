@@ -4,7 +4,7 @@ exports.checkAuth = (req, res, next) => {
 };
 
 exports.checkSeller = (req, res, next) => {
-  if (req.user?.role !== 'seller')
+  if (req.user?.role !== 'seller' || req.user?.role !== 'admin')
     return res.status(403).json({ error: 'Only sellers allowed' });
   next();
 };

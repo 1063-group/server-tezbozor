@@ -66,7 +66,7 @@ const {
  *       403:
  *         description: "Admin huquqi talab etiladi"
  */
-router.get('/orders-analysis', protect, admin, getOrdersAnalysis); // ✅
+router.get('/orders-analysis', getOrdersAnalysis); // ✅
 
 /**
  * @swagger
@@ -101,6 +101,7 @@ router.get('/summary', protect, admin, getDashboardSummary);
  *       200:
  *         description: Har oyga qarab buyurtmalar soni
  */
+
 router.get('/orders-graph', protect, admin, getMonthlyOrderGraph);
 
 /**

@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const connectDB = require('./config/db');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocs = require('./swaggerConfig');
@@ -11,6 +12,8 @@ const orderRoutes = require('./routes/orderRoutes');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const subCategoryRoutes = require('./routes/subCategoryRoutes');
+const shop = require('./routes/shopRoutes');
+const productUploadRoutes = require('./routes/productUploadRoutes');
 
 dotenv.config();
 
@@ -22,7 +25,11 @@ const PORT = process.env.PORT || 5000;
 // ====================
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     // allowedHeaders: ['Content-Type', 'application/json'],
     // credentials: true,
@@ -35,8 +42,9 @@ app.options('*', cors());
 // ====================
 // 📦 Middleware
 // ====================
-app.use(express.json()); // Обязательно после CORS
 
+app.use(express.json({ limit: '50mb' })); // JSON limitini oshirish
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // ====================
 // 🔌 Подключаем MongoDB
 // ====================
@@ -47,8 +55,9 @@ connectDB();
 // ====================
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ====================
-// 🚏 РоутыF
+// 🚏 Роуты
 // ====================
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
@@ -56,6 +65,8 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/subcategories', subCategoryRoutes);
+app.use('/api/shops', shop);
+app.use('/api/upload', productUploadRoutes);
 // ====================
 // 🧯 Глобальный Error Handler
 // ====================

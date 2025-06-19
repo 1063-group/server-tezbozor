@@ -22,6 +22,15 @@ const orderItemSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    age: {
+      type: Number,
+      required: true,
+    },
+    street: {
+      type: String,
+      required: true,
+      trim: true,
+    }
   },
   { _id: false }
 );

@@ -14,4 +14,4 @@ const CategorySchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('categories', CategorySchema);
+module.exports = mongoose.model('CategoryINPR', CategorySchema);
