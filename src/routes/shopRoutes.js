@@ -17,7 +17,8 @@ const {
   getMyShops,
 } = require('../controllers/shopController');
 const { protect, admin } = require('../middleware/authMiddleware');
-const upload = require("../middleware/uploadImage")
+const shopUpload = require('../middleware/uploads/shopUpload'); // 🔥 MODULDA AJRATILGAN
+
 /**
  * @swagger
  * /api/shops:
@@ -66,10 +67,11 @@ const upload = require("../middleware/uploadImage")
 router.post(
   '/',
   protect,
-  upload.single('logotype'), // 🔥 BU SHART!
+  shopUpload.single('logotype'), // ✅ MULTER MIDDLEWARE: 'logotype' nomi formData field nomi bilan mos bo‘lishi shart
   (req, res, next) => {
-    if (req.user.role !== 'seller')
+    if (req.user.role !== 'seller') {
       return res.status(403).json({ message: 'Only sellers can create shops' });
+    }
     next();
   },
   createShop
