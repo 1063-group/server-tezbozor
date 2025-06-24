@@ -9,26 +9,41 @@ const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 exports.createShop = async (req, res) => {
   try {
     const seller = req.user;
+    console.log('🟨 req.body:', req.body);
 
     if (seller.role !== 'seller') {
-      return res.status(403).json({ message: 'Only sellers can create shops.' });
+      return res
+        .status(403)
+        .json({ message: 'Only sellers can create shops.' });
     }
 
-    const { shopname, description, logotype, address, location, TariffPlan } = req.body;
+    const { shopname, description, logotype, address, TariffPlan } = req.body;
 
     if (!shopname || !TariffPlan) {
-      return res.status(400).json({ message: 'shopname and TariffPlan are required.' });
+      return res
+        .status(400)
+        .json({ message: 'shopname and TariffPlan are required.' });
     }
 
-    // const exists = await Shop.findOne({ owner: seller._id });
-    // if (exists) {
-    //   return res.status(409).json({ message: 'You already own a shop.' });
-    // }
+    // ✅ Fix: Parse location (because it's string in multipart/form-data)
+    let location = {};
+    if (req.body.location) {
+      try {
+        location = JSON.parse(req.body.location);
+      } catch (err) {
+        return res.status(400).json({ message: 'Invalid location format' });
+      }
+    }
+
+    // ✅ If multer is used and image uploaded
+    const logoPath = req.file
+      ? `/uploads/shops/${req.file.filename}`
+      : logotype;
 
     const newShop = await Shop.create({
       shopname,
       description,
-      logotype,
+      logotype: logoPath,
       address,
       location,
       TariffPlan,
@@ -41,7 +56,6 @@ exports.createShop = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-
 
 // my shops
 exports.getMyShops = async (req, res) => {
@@ -72,7 +86,8 @@ exports.getAllShops = async (req, res) => {
 exports.getShopById = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!isValidId(id)) return res.status(400).json({ message: 'Invalid shop ID' });
+    if (!isValidId(id))
+      return res.status(400).json({ message: 'Invalid shop ID' });
 
     const shop = await Shop.findById(id)
       .populate('owner', 'username')
@@ -93,7 +108,8 @@ exports.getShopById = async (req, res) => {
 exports.editShop = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!isValidId(id)) return res.status(400).json({ message: 'Invalid shop ID' });
+    if (!isValidId(id))
+      return res.status(400).json({ message: 'Invalid shop ID' });
 
     const shop = await Shop.findById(id);
     if (!shop) return res.status(404).json({ message: 'Shop not found' });
@@ -104,8 +120,16 @@ exports.editShop = async (req, res) => {
       return res.status(403).json({ message: 'Permission denied' });
     }
 
-    const updatableFields = ['shopname', 'description', 'logotype', 'address', 'location', 'TariffPlan', 'isVerified'];
-    updatableFields.forEach(field => {
+    const updatableFields = [
+      'shopname',
+      'description',
+      'logotype',
+      'address',
+      'location',
+      'TariffPlan',
+      'isVerified',
+    ];
+    updatableFields.forEach((field) => {
       if (req.body[field] !== undefined) shop[field] = req.body[field];
     });
 
@@ -120,7 +144,8 @@ exports.editShop = async (req, res) => {
 exports.deleteShop = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!isValidId(id)) return res.status(400).json({ message: 'Invalid shop ID' });
+    if (!isValidId(id))
+      return res.status(400).json({ message: 'Invalid shop ID' });
 
     const shop = await Shop.findById(id);
     if (!shop) return res.status(404).json({ message: 'Shop not found' });
@@ -144,9 +169,12 @@ exports.banShop = async (req, res) => {
     const { id } = req.params;
     const { from, to, reason } = req.body;
 
-    if (!isValidId(id)) return res.status(400).json({ message: 'Invalid shop ID' });
+    if (!isValidId(id))
+      return res.status(400).json({ message: 'Invalid shop ID' });
     if (!from || !to || !reason) {
-      return res.status(400).json({ message: 'from, to, and reason are required to ban a shop.' });
+      return res
+        .status(400)
+        .json({ message: 'from, to, and reason are required to ban a shop.' });
     }
 
     const shop = await Shop.findById(id);

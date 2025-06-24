@@ -17,7 +17,7 @@ const {
   getMyShops,
 } = require('../controllers/shopController');
 const { protect, admin } = require('../middleware/authMiddleware');
-
+const upload = require("../middleware/uploadImage")
 /**
  * @swagger
  * /api/shops:
@@ -62,9 +62,11 @@ const { protect, admin } = require('../middleware/authMiddleware');
  *       409:
  *         description: Shop already exists
  */
+
 router.post(
   '/',
   protect,
+  upload.single('logotype'), // 🔥 BU SHART!
   (req, res, next) => {
     if (req.user.role !== 'seller')
       return res.status(403).json({ message: 'Only sellers can create shops' });
