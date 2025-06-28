@@ -12,31 +12,20 @@ exports.createProduct = async (req, res) => {
     console.log('🧾 RAW BODY:', req.body);
     console.log('📷 IMAGE FILE:', req.file);
 
-    const raw = req.body.product;
+    const { name, category, seller, stock, shop, description, price, tags } =
+      req.body;
 
-    if (!raw) {
-      return res.status(400).json({ error: 'Missing product data' });
-    }
-
-    const data = JSON.parse(raw);
-
-    const { name, category, seller, stock, price } = data;
-    if (
-      !name ||
-      !category ||
-      !seller ||
-      !stock ||
-      !price?.costPrice ||
-      !price?.sellingPrice
-    ) {
+    if (!name || !category || !seller || !shop || !price) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const parsedPrice = {
-      costPrice: Number(req.body.price?.costPrice || 0),
-      sellingPrice: Number(req.body.price?.sellingPrice || 0),
-    };
-    parsedPrice.income = parsedPrice.sellingPrice - parsedPrice.costPrice;
+    // JSON string bo'lgan price ni parse qilamiz
+    let parsedPrice;
+    try {
+      parsedPrice = JSON.parse(price);
+    } catch (err) {
+      return res.status(400).json({ error: 'Invalid price format' });
+    }
 
     const user = await User.findById(seller);
     if (!user || user.role !== 'seller') {
@@ -44,12 +33,19 @@ exports.createProduct = async (req, res) => {
     }
 
     const newProduct = new Product({
-      ...data,
+      name,
+      category,
+      seller,
+      shop,
+      stock: Number(stock),
+      description,
       price: {
-        costPrice: price.costPrice,
-        sellingPrice: price.sellingPrice,
-        income: price.sellingPrice - price.costPrice,
+        costPrice: Number(parsedPrice.costPrice),
+        sellingPrice: Number(parsedPrice.sellingPrice),
+        income:
+          Number(parsedPrice.sellingPrice) - Number(parsedPrice.costPrice),
       },
+      tags: tags ? tags.split(',') : [],
       images: req.file ? [`/uploads/products/${req.file.filename}`] : [],
     });
 
@@ -61,6 +57,7 @@ exports.createProduct = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // 📌 GET ALL PRODUCTS
 exports.getAllProducts = async (req, res) => {
