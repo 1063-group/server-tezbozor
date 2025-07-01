@@ -1,4 +1,6 @@
 const Shop = require('../models/Shop');
+const Withdraw = require('../models/Withdraw');
+const Product = require('../models/Products')
 const User = require('../models/User');
 const mongoose = require('mongoose');
 
@@ -72,13 +74,56 @@ exports.getMyShops = async (req, res) => {
 // ✅ GET ALL SHOPS
 exports.getAllShops = async (req, res) => {
   try {
-    const shops = await Shop.find()
-      .populate('owner', 'username email')
-      .populate('products');
+    const shops = await Shop.find();
 
-    res.status(200).json({ success: true, total: shops.length, data: shops });
+    const shopStats = await Promise.all(
+      shops.map(async (shop) => {
+        // Komissiya
+        let commissionRate = 0.1;
+        if (shop.TariffPlan === 'premium') commissionRate = 0.05;
+        else if (shop.TariffPlan === 'basic') commissionRate = 0.15;
+
+        // Mahsulotlar
+        const products = await Product.find({ shop: shop._id });
+
+        let sale = 0;
+        let income = 0;
+
+        products.forEach(product => {
+          const sold = product.stock ?? 0;
+          const productIncome = product.price?.income ?? 0;
+
+          sale += sold;
+          income += productIncome;
+        });
+
+        // Withdraws (ixtiyoriy)
+        let totalWithdraw = 0;
+        if (Withdraw) {
+          const withdraws = await Withdraw.find({ shop: shop._id });
+          totalWithdraw = withdraws.reduce((sum, w) => sum + w.amount, 0);
+        }
+
+        const commissionAmount = income * commissionRate;
+
+        return {
+          _id: shop._id,
+          shopname: shop.shopname,
+          address: shop.address,
+          logotype: shop.logotype,
+          TariffPlan: shop.TariffPlan,
+          commission: `${commissionRate * 100}%`,
+          sale,
+          balance: income,
+          withdraw: totalWithdraw,
+        };
+      })
+    );
+
+    res.json({ success: true, data: shopStats });
   } catch (err) {
-    res.status(500).json({ message: 'Could not fetch shops' });
+    console.error('❌ Admin getAllShopStats error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
